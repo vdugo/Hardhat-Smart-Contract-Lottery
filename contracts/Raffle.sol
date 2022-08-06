@@ -166,9 +166,9 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface
         return s_recentWinner;
     }
 
-    function getRaffleState() public view returns(address)
+    function getRaffleState() public view returns(RaffleState)
     {
-        return s_recentWinner;
+        return s_raffleState;
     }
 
     function getNumWords() public pure returns(uint256)
