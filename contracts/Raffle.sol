@@ -101,19 +101,25 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface
      * 3. Our subscription is funded with LINK
      * 4. The lottery should be in an "open" state
      */
-    function checkUpkeep(bytes memory /*checkData*/) public override returns (bool upkeepNeeded, bytes memory /* performData */)
+    function checkUpkeep(bytes memory /*checkData*/) public view override 
+    returns (
+        bool upkeepNeeded, 
+        bytes memory /* performData */
+        )
     {
-        bool isOpen = (RaffleState.OPEN == s_raffleState);
+        bool isOpen = RaffleState.OPEN == s_raffleState;
         bool timePassed = ( (block.timestamp - s_lastTimestamp) > i_interval);
-        bool hasPlayers = ( s_players.length > 0 );
-        bool hasBalance = ( address(this).balance > 0 );
-        bool upkeepNeeded = ( isOpen && timePassed && hasPlayers && hasBalance );
+        bool hasPlayers = s_players.length > 0;
+        bool hasBalance = address(this).balance > 0;
+        bool upkeepNeeded = isOpen && timePassed && hasPlayers && hasBalance;
+
+        return (upkeepNeeded, "0x0");
 
     }
 
     function performUpkeep(bytes calldata /* performData */) external override
     {
-        (bool upkeepNeeded, ) = checkUpkeep("");
+        (bool upkeepNeeded, ) = checkUpkeep("0x");
         if (!upkeepNeeded)
         {
             revert Raffle_UpkeepNotNeeded(
