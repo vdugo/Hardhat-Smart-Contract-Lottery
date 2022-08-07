@@ -21,7 +21,7 @@ module.exports = {
     rinkeby: {
       chainId: 4,
       blockConfirmations: 6,
-      url: "",
+      url: RINKEBY_RPC_URL,
       accounts: [PRIVATE_KEY]
     }
   },
@@ -39,6 +39,11 @@ module.exports = {
     },
     player: {
       default: 1
+    }
+  },
+  etherscan: {
+    apiKey: {
+      rinkeby: ETHERSCAN_API_KEY
     }
   },
   mocha: {
