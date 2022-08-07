@@ -60,4 +60,27 @@ describe("Raffle Unit Tests", async () =>
             await expect(raffle.enterRaffle({value: raffleEntranceFee})).to.be.revertedWith("Raffle__NotOpen")
         })
     })
+
+    describe("checkUpkeep", async () =>
+    {
+        it("returns false if people haven't sent any ETH", async () =>
+        {
+            await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
+            await network.provider.send("evm_mine", [])
+            const { upkeepNeeded } = await raffle.callStatic.checkUpkeep([])
+            assert(!upkeepNeeded)
+        })
+
+        it("returns false if raffle isn't open", async () =>
+        {
+            await raffle.enterRaffle({value: raffleEntranceFee})
+            await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
+            await network.provider.send("evm_mine", [])
+            await raffle.performUpkeep([])
+            const raffleState = await raffle.getRaffleState()
+            const { upkeepNeeded } = await raffle.callStatic.checkUpkeep([])
+            assert.equal(raffleState.toString(), "1") // 1 is CALCULATING state
+            assert.equal(upkeepNeeded, false)
+        })
+    })
 })
