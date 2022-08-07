@@ -111,5 +111,9 @@ describe("Raffle Unit Tests", async () =>
             const tx = await raffle.performUpkeep([])
             assert(tx)
         })
+        it("reverts when checkUpkeep is false", async () =>
+        {
+            await expect(raffle.performUpkeep([])).to.be.reverted
+        })
     })
 })
