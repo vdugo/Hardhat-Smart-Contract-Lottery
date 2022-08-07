@@ -142,5 +142,47 @@ describe("Raffle Unit Tests", async () =>
             await expect(vrfCoordinatorV2Mock.fulfillRandomWords(0, raffle.address)).to.be.revertedWith("nonexistent request")
             await expect(vrfCoordinatorV2Mock.fulfillRandomWords(1, raffle.address)).to.be.revertedWith("nonexistent request")
         })
+
+        it("picks a winner, resets the lottery, and sends money", async () =>
+        {
+            const additionalEntrants = 3
+            const startingAccountIndex = 1 // deployer = 0
+            const accounts = await ethers.getSigners()
+
+            for (let i = startingAccountIndex; i < startingAccountIndex + additionalEntrants; i++)
+            {
+                const accountConnectedRaffle = raffle.connect(accounts[i])
+                await accountConnectedRaffle.enterRaffle({value: raffleEntranceFee})
+            }
+            const startTimestamp = await raffle.getLatestTimestamp()
+
+            await new Promise(async (resolve, reject) =>
+            {
+                raffle.once("WinnerPicked", async () => 
+                {
+                    console.log("Found the event!")
+                    try
+                    {
+                        const recentWinner = await raffle.getRecentWinner()
+                        console.log(`Recent winner: ${recentWinner}`)
+                        const raffleState = await raffle.getRaffleState()
+                        const endingTimestamp = await raffle.getLatestTimestamp()
+                        const numPlayers = await raffle.getNumberOfPlayers()
+
+                        assert.equal(numPlayers.toString(), "0")
+                        assert.equal(raffleState.toString(), "0")
+                        assert(endingTimestamp > startTimestamp)
+                    }
+                    catch (e)
+                    {
+                        reject(e)
+                    }
+                    resolve()
+                })
+                const tx = await raffle.performUpkeep([])
+                const txReceipt = await tx.wait(1)
+                await vrfCoordinatorV2Mock.fulfillRandomWords(txReceipt.events[1].args.requestId, raffle.address)
+            })
+        })
     })
 })

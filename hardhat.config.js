@@ -40,5 +40,8 @@ module.exports = {
     player: {
       default: 1
     }
+  },
+  mocha: {
+    timeout: 200000, // 200 seconds
   }
 };
