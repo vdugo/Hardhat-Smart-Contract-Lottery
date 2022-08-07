@@ -168,10 +168,27 @@ describe("Raffle Unit Tests", async () =>
                         const raffleState = await raffle.getRaffleState()
                         const endingTimestamp = await raffle.getLatestTimestamp()
                         const numPlayers = await raffle.getNumberOfPlayers()
+                        const winnerEndingBalance = await accounts[1].getBalance()
 
                         assert.equal(numPlayers.toString(), "0")
                         assert.equal(raffleState.toString(), "0")
                         assert(endingTimestamp > startTimestamp)
+
+                        assert.equal
+                        (
+                            // The winner should end with a balance of all of the
+                            // money that everyone else added to this contract
+
+                            winnerEndingBalance.toString(),
+
+                            winnerStartingBalance.add
+                            (
+                                raffleEntranceFee
+                                .mul(additionalEntrants)
+                                .add(raffleEntranceFee)
+                                .toString()
+                            )
+                        )
                     }
                     catch (e)
                     {
@@ -181,6 +198,7 @@ describe("Raffle Unit Tests", async () =>
                 })
                 const tx = await raffle.performUpkeep([])
                 const txReceipt = await tx.wait(1)
+                const winnerStartingBalance = await accounts[1].getBalance()
                 await vrfCoordinatorV2Mock.fulfillRandomWords(txReceipt.events[1].args.requestId, raffle.address)
             })
         })
