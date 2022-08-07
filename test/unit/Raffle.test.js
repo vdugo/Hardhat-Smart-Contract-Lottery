@@ -100,4 +100,16 @@ describe("Raffle Unit Tests", async () =>
             assert(upkeepNeeded)
         })
     })
+
+    describe("performUpkeep", async () =>
+    {
+        it("can only run if checkUpkeep is true", async () =>
+        {
+            await raffle.enterRaffle({value: raffleEntranceFee})
+            await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
+            await network.provider.send("evm_mine", [])
+            const tx = await raffle.performUpkeep([])
+            assert(tx)
+        })
+    })
 })
