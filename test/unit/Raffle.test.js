@@ -1,12 +1,12 @@
 const { assert, expect } = require('chai')
-const { getNamedAccounts, deployments, ethers } = require('hardhat')
+const { getNamedAccounts, deployments, ethers, network } = require('hardhat')
 const { developmentChains, networkConfig } = require('../../helper-hardhat-config')
 
 !developmentChains.includes(network.name) ? describe.skip 
 : 
 describe("Raffle Unit Tests", async () => 
 {
-    let deployer, raffle, vrfCoordinatorV2Mock, raffleEntranceFee
+    let deployer, raffle, vrfCoordinatorV2Mock, raffleEntranceFee, interval
     const chainId = network.config.chainId
 
     beforeEach(async () =>
@@ -16,6 +16,7 @@ describe("Raffle Unit Tests", async () =>
         raffle = await ethers.getContract("Raffle", deployer)
         vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock", deployer)
         raffleEntranceFee = await raffle.getEntranceFee()
+        interval = await raffle.getInterval()
     })
 
     describe("constructor", async () => 
@@ -41,6 +42,22 @@ describe("Raffle Unit Tests", async () =>
             await raffle.enterRaffle({value: raffleEntranceFee})
             const playerFromContract = await raffle.getPlayer(0)
             assert.equal(playerFromContract, deployer)
+        })
+
+        it("emits event on enter", async () =>
+        {
+            await expect(raffle.enterRaffle({value: raffleEntranceFee})).to.emit(raffle, "RaffleEnter")
+        })
+
+        it("doesn't allow entrance when raffle is calculating", async () =>
+        {
+            await raffle.enterRaffle({value: raffleEntranceFee})
+            await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
+            await network.provider.send("evm_mine", [])
+
+            // pretend to be a Chainlink keeper
+            await raffle.performUpkeep([])
+            await expect(raffle.enterRaffle({value: raffleEntranceFee})).to.be.revertedWith("Raffle__NotOpen")
         })
     })
 })
